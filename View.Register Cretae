@@ -1,0 +1,194 @@
+@model Sanket.Controllers.Registation
+
+@using (Html.BeginForm("Register", "RegistationForm", FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    @Html.AntiForgeryToken()
+
+<div class="container" style="background-color: #f0f8ff; padding: 20px; border-radius: 8px;">
+    <h4 class="text-center">Registration Form</h4>
+    <hr />
+
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+    <div class="form-group row text-center">
+        @Html.LabelFor(model => model.RegistationUserName, htmlAttributes: new { @class = "col-md-2 col-form-label" })
+        <div class="col-md-10">
+            @Html.EditorFor(model => model.RegistationUserName, new { htmlAttributes = new { @class = "form-control" } })
+            @Html.ValidationMessageFor(model => model.RegistationUserName, "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <div class="form-group row text-center">
+        @Html.LabelFor(model => model.UserName, htmlAttributes: new { @class = "col-md-2 col-form-label" })
+        <div class="col-md-10">
+            @Html.EditorFor(model => model.UserName, new { htmlAttributes = new { @class = "form-control" } })
+            @Html.ValidationMessageFor(model => model.UserName, "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <div class="form-group row text-center">
+        @Html.LabelFor(model => model.Password, htmlAttributes: new { @class = "col-md-2 col-form-label" })
+        <div class="col-md-10">
+            @Html.PasswordFor(model => model.Password, new { @class = "form-control", placeholder = "Enter Password" })
+            @Html.ValidationMessageFor(model => model.Password, "", new { @class = "text-danger" })
+
+            <!-- Password Strength Guidelines (optional, based on your requirements) -->
+            <div class="text-left">
+                <small class="form-text text-muted ">
+                    Your password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, a number, and a special character.
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row text-center">
+        @Html.LabelFor(model => model.DateofBirth, htmlAttributes: new { @class = "col-md-2 col-form-label" })
+        <div class="col-md-10">
+            @Html.TextBoxFor(model => model.DateofBirth, new { @class = "form-control", type = "date" })
+            @Html.ValidationMessageFor(model => model.DateofBirth, "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <div class="form-group row text-center">
+        @Html.LabelFor(model => model.Gender, htmlAttributes: new { @class = "col-md-2 col-form-label" })
+        <div class="col-md-6 text-left">
+            
+                @Html.RadioButtonFor(model => model.Gender, "Male", new { @class = "form-check-input", id = "genderMale" })
+                @Html.Label("genderMale", "Male", new { @class = "form-check-label" })
+
+                @Html.RadioButtonFor(model => model.Gender, "Female", new { @class = "form-check-input", id = "genderFemale" })
+                @Html.Label("genderFemale", "Female", new { @class = "form-check-label" })
+
+                @Html.RadioButtonFor(model => model.Gender, "Other", new { @class = "form-check-input", id = "genderOther" })
+                @Html.Label("genderOther", "Other", new { @class = "form-check-label" })
+
+            @Html.ValidationMessageFor(model => model.Gender, "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <div class="form-group row text-center">
+        @Html.LabelFor(model => model.Hobbies, htmlAttributes: new { @class = "col-md-2 col-form-label" })
+        <div class="col-md-10">
+            <div class="form-check text-left">
+                <input type="checkbox" name="Hobbies" value="Reading" @((Model.Hobbies != null && Model.Hobbies.Contains("Reading")) ? "checked" : "") />
+                @Html.Label("Reading", "Reading", new { @class = "form-check-label" })
+            </div>
+            <div class="form-check text-left">
+                <input type="checkbox" name="Hobbies" value="Travelling" @((Model.Hobbies != null && Model.Hobbies.Contains("Travelling")) ? "checked" : "") />
+                @Html.Label("Travelling", "Travelling", new { @class = "form-check-label" })
+            </div>
+            <div class="form-check text-left">
+                <input type="checkbox" name="Hobbies" value="Sports" @((Model.Hobbies != null && Model.Hobbies.Contains("Sports")) ? "checked" : "") />
+                @Html.Label("Sports", "Sports", new { @class = "form-check-label" })
+            </div>
+            <div class="form-check text-left">
+                <input type="checkbox" name="Hobbies" value="Cooking" @((Model.Hobbies != null && Model.Hobbies.Contains("Cooking")) ? "checked" : "") />
+                @Html.Label("Cooking", "Cooking", new { @class = "form-check-label" })
+            </div>
+            <div class="form-check text-left">
+                <input type="checkbox" name="Hobbies" value="Dancing" @((Model.Hobbies != null && Model.Hobbies.Contains("Dancing")) ? "checked" : "") />
+                @Html.Label("Dancing", "Dancing", new { @class = "form-check-label" })
+            </div>
+            @Html.ValidationMessageFor(model => model.Hobbies, "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <div class="form-group row text-center">
+        @Html.LabelFor(model => model.Address, htmlAttributes: new { @class = "col-md-2 col-form-label" })
+        <div class="col-md-10">
+            @Html.EditorFor(model => model.Address, new { htmlAttributes = new { @class = "form-control" } })
+            @Html.ValidationMessageFor(model => model.Address, "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <div class="form-group row text-center">
+        @Html.LabelFor(model => model.State, htmlAttributes: new { @class = "col-md-2 col-form-label" })
+        <div class="col-md-10">
+            @Html.DropDownListFor(model => model.State, (SelectList)ViewBag.States, "Select State", new { @class = "form-control", id = "StateDropdown" })
+            @Html.ValidationMessageFor(model => model.State, "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <div class="form-group row text-center">
+        @Html.LabelFor(model => model.City, htmlAttributes: new { @class = "col-md-2 col-form-label" })
+        <div class="col-md-10">
+            @Html.DropDownListFor(model => model.City, new SelectList(Enumerable.Empty<SelectListItem>()), "Select City", new { @class = "form-control", id = "CityDropdown" })
+            @Html.ValidationMessageFor(model => model.City, "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <div class="form-group row text-center">
+        @Html.LabelFor(model => model.Pincode, htmlAttributes: new { @class = "col-md-2 col-form-label" })
+        <div class="col-md-10">
+            @Html.EditorFor(model => model.Pincode, new { htmlAttributes = new { @class = "form-control" } })
+            @Html.ValidationMessageFor(model => model.Pincode, "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <div class="form-group row text-center">
+        @Html.LabelFor(model => model.Document, htmlAttributes: new { @class = "col-md-2 col-form-label" })
+        <div class="col-md-10">
+            @Html.EditorFor(model => model.Document, new { htmlAttributes = new { @class = "form-control", type = "file" } })
+            @Html.ValidationMessageFor(model => model.Document, "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <div class="form-group row text-center">
+        <div class="col-md-6">
+            <input type="submit" value="Submit" class="btn btn-primary" />
+        
+            <button type="button" class="btn btn-primary" onclick="window.location.href='@Url.Action("Login", "RegistationForm")'">Login</button>
+        </div>
+    </div>
+</div>
+}
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $.ajax({
+                url: '@Url.Action("GetStates", "RegistationForm")',
+                type: 'GET',
+                success: function (data) {
+                    $('#StateDropdown').empty();
+                    $('#StateDropdown').append('<option value="">Select State</option>');
+                    $.each(data, function (index, state) {
+                        $('#StateDropdown').append('<option value="' + state + '">' + state + '</option>');
+                    });
+                },
+                error: function () {
+                    alert('Error loading states.');
+                }
+            });
+
+            $('#StateDropdown').change(function () {
+                var selectedState = $(this).val();
+
+                if (selectedState) {
+                    $.ajax({
+                        url: '@Url.Action("GetCitiesByState", "RegistationForm")',
+                        data: { state: selectedState },
+                        type: 'GET',
+                        success: function (data) {
+                            $('#CityDropdown').empty();
+                            $('#CityDropdown').append('<option value="">Select City</option>');
+
+
+                            $.each(data, function (index, city) {
+                                $('#CityDropdown').append('<option value="' + city + '">' + city + '</option>');
+                            });
+                        },
+                        error: function () {
+                            alert('Error loading cities.');
+                        }
+                    });
+                } else {
+                    $('#CityDropdown').empty();
+                    $('#CityDropdown').append('<option value="">Select City</option>');
+                }
+            });
+
+        });
+    </script>
+}
