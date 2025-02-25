@@ -1,0 +1,362 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Data;
+using System.Data.SqlClient;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Web;
+using System.Web.Mvc;
+using static Sanket.Controllers.RegistationFormController;
+
+namespace Sanket.Controllers
+{
+    public class Registation
+    {
+        public int RegisterID { get; set; }
+        public string RegistationUserName { get; set; }
+        public string UserName { get; set; }
+        [StrongPassword]
+        public string Password { get; set; }
+        public DateTime DateofBirth { get; set; }
+        public string Gender { get; set; }
+        public List<string> Hobbies { get; set; } // Changed to a list of hobbies
+        public string Address { get; set; }
+        public string State { get; set; }
+        public string City { get; set; }
+        public int Pincode { get; set; }
+        public string Document { get; set; }
+
+    }
+    public class RegistationFormController : Controller
+    {
+        // GET: RegistationForm
+        string str = @"Data Source=IAMSACHIN\SQLEXPRESS; Initial catalog=Registration; Integrated Security=True";
+
+        // Action to get states for the dropdown
+        [HttpGet]
+        public JsonResult GetStates()
+        {
+            List<string> states = new List<string>();
+
+            using (SqlConnection con = new SqlConnection(str))
+            {
+                SqlCommand cmd = new SqlCommand("SELECT StateName FROM States", con);
+                con.Open();
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    states.Add(reader["StateName"].ToString());
+                }
+                con.Close();
+            }
+
+            return Json(states, JsonRequestBehavior.AllowGet);
+        }
+
+        // Action to get cities based on the selected state
+        [HttpGet]
+        public JsonResult GetCitiesByState(string state)
+        {
+            List<string> cities = new List<string>();
+
+            using (SqlConnection con = new SqlConnection(str))
+            {
+                SqlCommand cmd = new SqlCommand("SELECT c.CityName FROM Cities c JOIN States s ON c.StateID = s.StateID WHERE s.StateName = @State", con);
+                cmd.Parameters.AddWithValue("@State", state);
+                con.Open();
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    cities.Add(reader["CityName"].ToString());
+                }
+                con.Close();
+            }
+
+            return Json(cities, JsonRequestBehavior.AllowGet);
+        }
+
+        // GET: Registration Form
+        [HttpGet]
+        public ActionResult Register()
+        {
+            List<string> states = new List<string>();
+
+            using (SqlConnection con = new SqlConnection(str))
+            {
+                SqlCommand cmd = new SqlCommand("SELECT StateName FROM States", con);
+                con.Open();
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    states.Add(reader["StateName"].ToString());
+                }
+                con.Close();
+            }
+
+            ViewBag.States = new SelectList(states);
+            return View(new Registation());
+        }
+
+
+        public class StrongPasswordAttribute : ValidationAttribute
+        {
+            public StrongPasswordAttribute()
+            {
+                // Default error message
+                this.ErrorMessage = "Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one digit, and one special character.";
+            }
+
+            public override bool IsValid(object value)
+            {
+                if (value == null)
+                    return false;
+
+                string password = value.ToString();
+
+                // Password strength criteria
+                bool hasUpperChar = false;
+                bool hasLowerChar = false;
+                bool hasDigit = false;
+                bool hasSpecialChar = false;
+
+                // Check length of password
+                if (password.Length < 8)
+                    return false;
+
+                foreach (var ch in password)
+                {
+                    if (Char.IsUpper(ch))
+                        hasUpperChar = true;
+                    else if (Char.IsLower(ch))
+                        hasLowerChar = true;
+                    else if (Char.IsDigit(ch))
+                        hasDigit = true;
+                    else if (Regex.IsMatch(ch.ToString(), @"[!@#$%^&*(),.?\""{}|<>]"))
+                        hasSpecialChar = true;
+                }
+
+                // Return true if all conditions are met
+                return hasUpperChar && hasLowerChar && hasDigit && hasSpecialChar;
+            }
+        }
+
+        // POST: Save Registration
+        [HttpPost]
+        public ActionResult Register(Registation model, HttpPostedFileBase document)
+        {
+            // Check if the model is valid
+            if (ModelState.IsValid)
+            {
+                string filePath = null;  // Set filePath to null initially
+
+                // Check if a file is uploaded
+                if (document != null && document.ContentLength > 0)
+                {
+                    // Generate a unique file name to avoid conflicts
+                    var fileName = Guid.NewGuid().ToString() + Path.GetExtension(document.FileName);
+
+                    // Set the directory where the file will be saved
+                    var uploadDirectory = Server.MapPath("~/Uploads");
+
+                    // Ensure the directory exists
+                    if (!Directory.Exists(uploadDirectory))
+                    {
+                        Directory.CreateDirectory(uploadDirectory);
+                    }
+
+                    // Create the full file path where the file will be saved
+                    filePath = Path.Combine(uploadDirectory, fileName);
+
+                    // Save the file to the server
+                    document.SaveAs(filePath);
+
+                    // Store the relative file path (only the file name) in the database
+                    filePath = Path.Combine("~/Uploads", fileName); // Store only the relative path
+                }
+
+                // Save the registration data to the database
+                using (SqlConnection con = new SqlConnection(str))
+                {
+                    SqlCommand cmd = new SqlCommand("sp_InsertRegistration", con);
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    cmd.Parameters.AddWithValue("@RegistrationUserName", model.RegistationUserName);
+                    cmd.Parameters.AddWithValue("@UserName", model.UserName);
+                    cmd.Parameters.AddWithValue("@Password", model.Password);
+                    cmd.Parameters.AddWithValue("@DateofBirth", model.DateofBirth);
+                    cmd.Parameters.AddWithValue("@Gender", model.Gender);
+                    cmd.Parameters.AddWithValue("@Address", model.Address);
+                    cmd.Parameters.AddWithValue("@State", model.State);
+                    cmd.Parameters.AddWithValue("@City", model.City);
+                    cmd.Parameters.AddWithValue("@Pincode", model.Pincode);
+                    cmd.Parameters.AddWithValue("@Document", (object)filePath ?? DBNull.Value); // If no file, store DBNull
+
+                    cmd.Parameters.AddWithValue("@Hobbies", string.Join(",", model.Hobbies));
+
+                    // Open connection and execute the stored procedure
+                    con.Open();
+                    cmd.ExecuteNonQuery();
+                    con.Close();
+                }
+
+                // Redirect after saving the registration
+                return RedirectToAction("Register");
+            }
+
+
+
+            // If validation fails, return the same view with validation messages
+            // Re-fetch the states and repopulate ViewBag for the dropdown
+            List<string> states = new List<string>();
+
+            using (SqlConnection con = new SqlConnection(str))
+            {
+                SqlCommand cmd = new SqlCommand("SELECT StateName FROM States", con);
+                con.Open();
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    states.Add(reader["StateName"].ToString());
+                }
+                con.Close();
+            }
+
+            // Repopulate ViewBag with the state list so the dropdown appears again
+            ViewBag.States = new SelectList(states);
+
+            // Return the same view with the model, which will show the validation error messages
+            return View(model);
+        }
+
+        // List registrations with pagination
+        public ActionResult RegistrationList(int page = 1, int pageSize = 10)
+        {
+            SqlConnection con = new SqlConnection(str);
+
+            // Calculate how many rows to skip based on the current page
+            int skip = (page - 1) * pageSize;
+
+            SqlCommand cmd = new SqlCommand("ListRegistationWithPagination11", con); // Assume you have a stored procedure for pagination
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            // Add parameters for pagination
+            cmd.Parameters.AddWithValue("@Skip", skip);
+            cmd.Parameters.AddWithValue("@Take", pageSize);                             
+
+            SqlDataAdapter da = new SqlDataAdapter(cmd);
+            DataSet ds = new DataSet();
+            da.Fill(ds);
+            DataTable dt = ds.Tables[0];
+
+            // Map the DataTable to the list of Registration model
+            List<Registation> lst = new List<Registation>();
+            foreach (DataRow item in dt.Rows)
+            {
+                var hobbies = item["Hobbies"].ToString()
+                    .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(hobby => hobby.Trim())
+                    .ToList();
+
+                lst.Add(new Registation()
+                {
+                    RegistationUserName = item["RegistrationUserName"].ToString(),
+                    UserName = item["UserName"].ToString(),
+                    Password = item["Password"].ToString(),
+                    DateofBirth = Convert.ToDateTime(item["DateofBirth"]),
+                    Gender = item["Gender"].ToString(),
+                    Address = item["Address"].ToString(),
+                    City = item["City"].ToString(),
+                    State = item["State"].ToString(),
+                    Pincode = Convert.ToInt32(item["Pincode"]),
+                    Document = item["Document"].ToString(),
+                    Hobbies = hobbies
+                });
+            }
+
+            // Calculate total records for pagination
+            SqlCommand countCmd = new SqlCommand("SELECT COUNT(*) FROM Registration", con); // Optimize with a separate count query
+            con.Open();
+            int totalRegistrations = Convert.ToInt32(countCmd.ExecuteScalar());
+            con.Close();
+
+            // Calculate total pages
+            int totalPages = (int)Math.Ceiling((double)totalRegistrations / pageSize);
+
+            // Pass data to the view
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.PageSize = pageSize; // Pass selected page size to the view
+            ViewBag.TotalRegistrations = totalRegistrations;
+
+            return View(lst);
+        }
+
+        [HttpGet]
+        public ActionResult Login()
+        {
+            return View();
+        }
+        [HttpPost]
+        public ActionResult Login(string username, string password)
+        {
+            // Check if username or password is empty
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            {
+                ViewBag.ErrorMessage = "Username or Password cannot be empty!";
+                return View("Login"); // Display the error message in the login view
+            }
+
+            // Verify credentials in the database
+            bool isAuthenticated = AuthenticateUser(username, password);
+
+            if (isAuthenticated)
+            {
+                // Redirect to a secure area after successful login, like a dashboard or home page
+                return RedirectToAction("RegistrationList", "RegistationForm"); // You can change this to your desired redirect action
+            }
+            else
+            {
+                // If authentication fails, show an error message
+                ViewBag.ErrorMessage = "Invalid Username or Password!";
+                return View("Login"); // Show the error message in the login view
+            }
+        }
+
+        // Method to authenticate the user by comparing the entered credentials with the database records
+        private bool AuthenticateUser(string username, string password)
+        {
+            bool isValidUser = false;
+
+            using (SqlConnection con = new SqlConnection(str))
+            {
+                SqlCommand cmd = new SqlCommand("SELECT COUNT(1) FROM Registration WHERE UserName = @UserName AND Password = @Password", con);
+                cmd.Parameters.AddWithValue("@UserName", username);
+                cmd.Parameters.AddWithValue("@Password", password); // Ideally, passwords should be hashed for security
+
+                con.Open();
+                int result = Convert.ToInt32(cmd.ExecuteScalar()); // Executes the query and returns the count
+                con.Close();
+
+                if (result > 0)
+                {
+                    isValidUser = true;
+                }
+            }
+
+            return isValidUser;
+        }
+
+        
+        public ActionResult Logedin()
+        {
+            return View();
+        }
+    }
+
+}
