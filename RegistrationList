@@ -1,0 +1,120 @@
+@model IEnumerable<Sanket.Controllers.Registation>
+
+@{
+    ViewBag.Title = "RegistrationList";
+}
+
+<div class="container" style="background-color: #f0f8ff; padding: 20px; border-radius: 8px;">
+    <h2 class="text-center my-4">Registration List</h2>
+
+    <!-- Page Size Dropdown -->
+    <div class="mb-4">
+        <label for="pageSize" class="mr-2">Page Size:</label>
+        <select id="pageSize" class="form-control w-auto d-inline" onchange="location.href='@Url.Action("RegistrationList", "RegistationForm")?page=1&pageSize='+this.value;">
+            <option value="5" @(ViewBag.PageSize == 5 ? "selected" : "")>5</option>
+            <option value="10" @(ViewBag.PageSize == 10 ? "selected" : "")>10</option>
+            <option value="20" @(ViewBag.PageSize == 20 ? "selected" : "")>20</option>
+            <option value="50" @(ViewBag.PageSize == 50 ? "selected" : "")>50</option>
+        </select>
+    </div>
+
+    <!-- Table Displaying Registrations -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    
+                    <th>Registration User Name</th>
+                    <th>User Name</th>
+                    <th>Password</th>
+                    <th>Date of Birth</th>
+                    <th>Gender</th>
+                    <th>Address</th>
+                    <th>State</th>
+                    <th>City</th>
+                    <th>Pincode</th>
+                    <th>Document</th>
+                    
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                <tr>
+                    <td>@Html.DisplayFor(modelItem => item.RegistationUserName)</td>
+                    <td>@Html.DisplayFor(modelItem => item.UserName)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Password)</td>
+                    <td>@Html.DisplayFor(modelItem => item.DateofBirth)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Gender)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Address)</td>
+                    <td>@Html.DisplayFor(modelItem => item.State)</td>
+                    <td>@Html.DisplayFor(modelItem => item.City)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Pincode)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Document)</td>
+                    
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <strong>Total Registrations: @ViewBag.TotalRegistrations</strong>
+        </div>
+
+        <div>
+            <nav>
+                <ul class="pagination">
+                    @if (ViewBag.CurrentPage > 1)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url.Action("RegistrationList", "RegistationForm", new { page = ViewBag.CurrentPage - 1, pageSize = ViewBag.PageSize })">Previous</a>
+                        </li>
+                    }
+
+                    <li class="page-item disabled">
+                        <span class="page-link">Page @ViewBag.CurrentPage of @ViewBag.TotalPages</span>
+                    </li>
+
+                    @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url.Action("RegistrationList", "RegistationForm", new { page = ViewBag.CurrentPage + 1, pageSize = ViewBag.PageSize })">Next</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+   
+</div>
+
+<style>
+    .pagination {
+        margin-top: 20px;
+    }
+
+        .pagination .page-item a {
+            background-color: #007bff;
+            color: white;
+        }
+
+            .pagination .page-item a:hover {
+                background-color: #0056b3;
+            }
+
+        .pagination .page-item.disabled span {
+            color: #6c757d;
+        }
+
+    .table th, .table td {
+        vertical-align: middle;
+    }
+
+    .table-responsive {
+        margin-top: 20px;
+    }
+</style>
